@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Live Order Book</title>
+    </head>
+    <body>
+        <h3>OrderBook</h3>
+        <div id="order" style="height: 800px; width: 1000px;"></div>
+    </body>
+    <script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
+    <script>
+        orderEle = document.getElementById("order")
+        websocket = new WebSocket("ws://localhost:8000/ws/orderBook")
+        websocket.onopen = () => {
+            console.log("WebSocket Connected")
+        }
+        websocket.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            console.log(data)
+            const bidPrice = Object.keys(data.bid).map(p => parseFloat(p));
+            const bidQuantity = Object.values(data.bid).map(q => parseFloat(q));
+    
+            const askPrice = Object.keys(data.ask).map(p => parseFloat(p));
+            const askQuantity = Object.values(data.ask).map(q => parseFloat(q));
+    
+            const bestBid = data.bbo.bestBidPrice;
+            const bestAsk = data.bbo.bestOfferPrice;
+
+            const bidGraph = {
+                x: bidPrice,
+                y: bidQuantity,
+                name: 'Bids',
+                type: 'bar',
+                marker: { color: 'green' }
+            };
+    
+            const askGraph = {
+                x: askPrice,
+                y: askQuantity,
+                name: "Asks",
+                type: 'bar',
+                marker: { color: 'red' }
+            };
+    
+            const layout = {
+                title: 'Current OrderBook',
+                barmode: 'group',
+                xaxis: {title: 'Price'},
+                yaxis: {title: 'Quantity'},
+                shapes: [{
+                    type: 'line',
+                    x0: bestBid,
+                    x1: bestBid,
+                    y0: 0,
+                    y1: Math.max(...askQuantity, ...bidQuantity),
+                    line: { color: "blue", width: 2, dash: 'dot' },
+                    name: { title: 'Best Bid'}
+                },
+                {
+                    type: 'line',
+                    x0: bestAsk,
+                    x1: bestAsk,
+                    y0: 0,
+                    y1: Math.max(...askQuantity, ...bidQuantity),
+                    line: { color: "yellow", width: 2, dash: "dot" },
+                    name: "Best Ask"
+                }
+            ],
+            annotations: [
+            {
+                x: bestBid,
+                y: Math.max(...bidQuantity),
+                xanchor: 'left',
+                yanchor: 'bottom',
+                text: `Best Bid: ${bestBid}`,
+                showarrow: false,
+                font: { color: 'green' }
+            },
+            {
+                x: bestAsk,
+                y: Math.max(...askQuantity),
+                xanchor: 'left',
+                yanchor: 'bottom',
+                text: `Best Ask: ${bestAsk}`,
+                showarrow: false,
+                font: { color: 'red' }
+            }
+            ]
+            };
+    
+            Plotly.react(orderEle, [bidGraph, askGraph], layout);
+        }
+        websocket.onerror = (error) => {
+            console.log(error)
+        }
+        websocket.onclose = () => {
+            console.log("WebSocket closed!!!!")
+        }
+
+    </script>
+</html>
