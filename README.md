@@ -30,7 +30,7 @@ This is a simplified crypto matching engine inspired by real-world exchanges and
 - /ws/orderBook (WebSocket for sending live data)
 
 > ## Setup instructions
-> - pip install -r requirements
+> - pip install -r requirements.txt
 > - uvicorn main:app --reload
 > - http://localhost:8000/docs
 > - Navigate to http://localhost:8000/static/orderBook.html for live data
